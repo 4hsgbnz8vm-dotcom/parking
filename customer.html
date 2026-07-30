@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>주차 등록</title>
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --ink: #1F2E28;
+    --muted: #6b6b63;
+    --faint: #8A8A82;
+    --border: #D8D5CB;
+    --cafe: #2F6F62;
+    --cafe-bg: #EAF2EF;
+    --donkatsu: #9C6B2E;
+    --donkatsu-bg: #F5EEE1;
+    --danger: #C1443A;
+    --danger-bg: #FBEAE8;
+    --success-bg: #EAF2EF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
+    display: flex; align-items: flex-start; justify-content: center;
+  }
+  .wrap { max-width: 480px; width: 100%; margin: 0 auto; padding: 32px 20px 60px; }
+  header { text-align: center; margin-bottom: 24px; }
+  h1 { font-size: 24px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .sub { font-size: 14px; color: var(--muted); line-height: 1.5; }
+  .occ { text-align: center; font-size: 13px; color: var(--faint); margin-bottom: 20px; font-family: ui-monospace, monospace; }
+  .occ .full { color: var(--danger); font-weight: 700; }
+
+  form { background: #fff; border: 1px solid #E4E1D8; border-radius: 18px; padding: 24px; }
+  .field-row { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input[type=text] {
+    width: 100%; border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 16px; outline: none;
+  }
+  input[type=text]:focus { box-shadow: 0 0 0 2px var(--cafe); }
+  .store-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .store-btn {
+    flex: 1; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 15px;
+    border: 1px solid var(--border); background: #fff; cursor: pointer;
+  }
+  .error { color: var(--danger); font-size: 14px; margin-bottom: 14px; }
+  .submit-btn {
+    width: 100%; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 16px;
+    color: #fff; background: var(--ink); border: none; cursor: pointer;
+  }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .status-line { text-align: center; font-size: 13px; color: var(--faint); margin-top: 16px; }
+
+  .success {
+    display: none; background: var(--success-bg); border: 1px solid #C9E0D8; border-radius: 18px;
+    padding: 32px 24px; text-align: center;
+  }
+  .success.show { display: block; }
+  .success .icon { font-size: 40px; margin-bottom: 12px; }
+  .success h2 { font-size: 19px; margin: 0 0 8px; }
+  .success p { font-size: 14px; color: var(--muted); margin: 0 0 6px; line-height: 1.5; }
+  .success .again-btn {
+    margin-top: 18px; background: none; border: none; color: var(--cafe);
+    font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer;
+  }
+
+  .debug-banner {
+    display: none; background: #FBEAE8; border: 1px solid #E8B4AE; color: var(--danger);
+    font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;
+  }
+  .debug-banner.show { display: block; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>주차 등록</h1>
+      <div class="sub">카페 · 돈까스 공용 주차장<br />등록하시면 3시간까지 무료예요</div>
+    </header>
+
+    <div class="debug-banner" id="debugBanner"></div>
+    <div class="occ" id="occLine"></div>
+
+    <form id="addForm">
+      <div class="field-row">
+        <label>차량 번호</label>
+        <input type="text" id="plateInput" placeholder="12가 3456" />
+      </div>
+      <div class="field-row">
+        <label>연락처 (선택)</label>
+        <input type="text" id="phoneInput" placeholder="010-0000-0000" />
+      </div>
+      <label>어디 손님이신가요?</label>
+      <div class="store-row" id="storeRow">
+        <button type="button" class="store-btn" data-store="cafe">카페</button>
+        <button type="button" class="store-btn" data-store="donkatsu">돈까스</button>
+      </div>
+      <div class="error" id="errorMsg" style="display:none;"></div>
+      <button type="submit" class="submit-btn" id="submitBtn">등록하기</button>
+    </form>
+
+    <div class="success" id="successBox">
+      <div class="icon">✅</div>
+      <h2>등록 완료</h2>
+      <p id="successPlate"></p>
+      <p id="successTime"></p>
+      <p>이 시각부터 3시간까지 무료 주차예요.</p>
+      <button class="again-btn" id="againBtn">다른 차량 등록하기</button>
+    </div>
+
+    <div class="status-line" id="statusLine">연결 중…</div>
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+/* 카페/돈까스 직원용 페이지와 동일한 firebaseConfig 값 사용 */
+const firebaseConfig = {
+  apiKey: "AIzaSyAvyANB0e_bd78hv7viato-bkhRnTMAqmc",
+  authDomain: "parking-3b761.firebaseapp.com",
+  databaseURL: "https://parking-3b761-default-rtdb.firebaseio.com/",
+  projectId: "parking-3b761",
+  storageBucket: "parking-3b761.firebasestorage.app",
+  messagingSenderId: "737089930127",
+  appId: "1:737089930127:web:402f1ae8dfbfb495a741fa"
+};
+
+const TOTAL_SPOTS = 7;
+const STORE_META = {
+  cafe: { label: "카페", color: "#2F6F62" },
+  donkatsu: { label: "돈까스", color: "#9C6B2E" },
+};
+
+let carCount = 0;
+let selectedStore = "cafe";
+let connected = false;
+let carsRef = null;
+
+const occLine = document.getElementById("occLine");
+const statusLine = document.getElementById("statusLine");
+const errorMsg = document.getElementById("errorMsg");
+const submitBtn = document.getElementById("submitBtn");
+const debugBanner = document.getElementById("debugBanner");
+const addForm = document.getElementById("addForm");
+const successBox = document.getElementById("successBox");
+const successPlate = document.getElementById("successPlate");
+const successTime = document.getElementById("successTime");
+
+function showDebug(msg) { debugBanner.textContent = msg; debugBanner.classList.add("show"); }
+function clearDebug() { debugBanner.classList.remove("show"); }
+function pad(n) { return String(n).padStart(2, "0"); }
+
+try {
+  if (String(firebaseConfig.apiKey).includes("여기에") || String(firebaseConfig.databaseURL).includes("여기에")) {
+    showDebug("firebaseConfig 값이 아직 비어있어요.");
+    statusLine.textContent = "설정 필요";
+  } else {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    carsRef = db.ref("cars");
+
+    carsRef.on("value", (snapshot) => {
+      const val = snapshot.val();
+      carCount = val ? Object.keys(val).length : 0;
+      connected = true;
+      clearDebug();
+      render();
+    }, (err) => {
+      showDebug("연결 오류: " + err.message);
+    });
+  }
+} catch (e) {
+  showDebug("초기화 오류: " + e.message);
+}
+
+function render() {
+  occLine.innerHTML = carCount >= TOTAL_SPOTS
+    ? `<span class="full">주차장이 가득 찼어요 (${carCount}/${TOTAL_SPOTS})</span>`
+    : `현재 ${carCount}/${TOTAL_SPOTS}자리 이용 중`;
+  submitBtn.disabled = carCount >= TOTAL_SPOTS;
+  submitBtn.textContent = carCount >= TOTAL_SPOTS ? "주차장이 가득 찼습니다" : "등록하기";
+  statusLine.style.display = connected ? "none" : "block";
+}
+
+document.querySelectorAll(".store-btn").forEach((btn) => {
+  updateStoreBtn(btn);
+  btn.onclick = () => {
+    selectedStore = btn.dataset.store;
+    document.querySelectorAll(".store-btn").forEach(updateStoreBtn);
+  };
+});
+function updateStoreBtn(btn) {
+  const meta = STORE_META[btn.dataset.store];
+  if (btn.dataset.store === selectedStore) {
+    btn.style.background = meta.color; btn.style.color = "#fff"; btn.style.borderColor = meta.color;
+  } else {
+    btn.style.background = "#fff"; btn.style.color = meta.color; btn.style.borderColor = "var(--border)";
+  }
+}
+
+addForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  errorMsg.style.display = "none";
+  if (!carsRef) { showDebug("설정이 안 되어 있어서 등록할 수 없어요."); return; }
+
+  const plateInput = document.getElementById("plateInput");
+  const phoneInput = document.getElementById("phoneInput");
+  const plate = plateInput.value.trim();
+  const phone = phoneInput.value.trim();
+
+  if (!plate) { errorMsg.textContent = "차량 번호를 입력해주세요."; errorMsg.style.display = "block"; return; }
+  if (carCount >= TOTAL_SPOTS) { errorMsg.textContent = "주차장이 가득 찼습니다."; errorMsg.style.display = "block"; return; }
+
+  const now = Date.now();
+  const id = now + "-" + Math.random().toString(36).slice(2, 7);
+  const newCar = { id, plate, phone, store: selectedStore, startedAt: now };
+
+  submitBtn.disabled = true;
+  carsRef.child(id).set(newCar)
+    .then(() => {
+      const d = new Date(now);
+      const h = d.getHours(); const m = d.getMinutes();
+      const ampm = h < 12 ? "오전" : "오후"; const h12 = h % 12 === 0 ? 12 : h % 12;
+      successPlate.textContent = plate;
+      successTime.textContent = `${ampm} ${h12}:${pad(m)}에 등록됐어요.`;
+      addForm.style.display = "none";
+      occLine.style.display = "none";
+      successBox.classList.add("show");
+    })
+    .catch((err) => {
+      showDebug("등록 실패: " + err.message);
+      submitBtn.disabled = carCount >= TOTAL_SPOTS;
+    });
+});
+
+document.getElementById("againBtn").onclick = () => {
+  document.getElementById("plateInput").value = "";
+  document.getElementById("phoneInput").value = "";
+  addForm.style.display = "block";
+  occLine.style.display = "block";
+  successBox.classList.remove("show");
+  submitBtn.disabled = carCount >= TOTAL_SPOTS;
+};
+</script>
+</body>
+</html>
