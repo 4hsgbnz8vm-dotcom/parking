@@ -25,7 +25,7 @@
     color: var(--ink);
     font-family: system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 90px; transition: padding-bottom 0.3s ease; }
   header { margin-bottom: 20px; }
   .headrow { display: flex; align-items: baseline; justify-content: space-between; }
   h1 { font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -0.02em; }
@@ -51,7 +51,8 @@
   .spot .tag-spot { font-family: ui-monospace, monospace; font-size: 12px; color: var(--faint); }
   .spot .plate { font-size: 20px; font-weight: 800; margin-top: 2px; word-break: break-all; }
   .badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; color: #fff; white-space: nowrap; margin-left: 8px; }
-  .phone { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+  .phone { font-size: 14px; color: var(--muted); margin-bottom: 2px; }
+  .checkin { font-size: 13px; color: var(--faint); margin-bottom: 12px; }
   .bottomrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .timer { font-family: ui-monospace, monospace; font-size: 18px; }
   .timer.over { color: var(--danger); font-weight: 700; }
@@ -63,7 +64,26 @@
   .bar-track { margin-top: 12px; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.6); overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 999px; transition: width 0.3s; }
 
-  form { background: #fff; border: 1px solid #E4E1D8; border-radius: 16px; padding: 20px; }
+  #formSheet {
+    background: #fff; border: 1px solid #E4E1D8;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    max-width: 720px; margin: 0 auto;
+    box-shadow: 0 -6px 20px rgba(31,46,40,0.10);
+    border-radius: 16px 16px 0 0;
+  }
+  .sheet-handle {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: none; border: none; padding: 14px; font-size: 15px; font-weight: 700;
+    color: var(--ink); cursor: pointer;
+  }
+  .sheet-handle .chevron { font-size: 12px; transition: transform 0.25s ease; }
+  #formSheet.open .sheet-handle .chevron { transform: rotate(180deg); }
+  .sheet-body {
+    max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+  }
+  #formSheet.open .sheet-body { max-height: 70vh; overflow-y: auto; }
+  .sheet-body-inner { padding: 0 20px calc(20px + env(safe-area-inset-bottom)); }
+  form { margin: 0; }
   form h2 { font-size: 17px; font-weight: 700; margin: 0 0 16px; }
   .field-row { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
   @media (min-width: 640px) { .field-row { grid-template-columns: 1fr 1fr; } }
@@ -113,35 +133,41 @@
         <h1>주차장 현황</h1>
         <div class="count"><span class="num" id="occNum">0</span><span class="of"> / 7</span></div>
       </div>
-      <div class="sub">카페 · 돈까스집 공용 주차장 — 등록 후 3시간 무료</div>
+      <div class="sub">카페 · 돈까스 공용 주차장 — 등록 후 3시간 무료</div>
     </header>
 
     <div class="debug-banner" id="debugBanner"></div>
 
     <div class="grid" id="spotGrid"></div>
 
-    <form id="addForm">
-      <h2>차량 등록</h2>
-      <div class="field-row">
-        <div>
-          <label>차량 번호</label>
-          <input type="text" id="plateInput" placeholder="12가 3456" />
-        </div>
-        <div>
-          <label>연락처 (선택)</label>
-          <input type="text" id="phoneInput" placeholder="010-0000-0000" />
-        </div>
-      </div>
-      <label>등록 매장</label>
-      <div class="store-row" id="storeRow">
-        <button type="button" class="store-btn" data-store="cafe">카페</button>
-        <button type="button" class="store-btn" data-store="donkatsu">돈까스집</button>
-      </div>
-      <div class="error" id="errorMsg" style="display:none;"></div>
-      <button type="submit" class="submit-btn" id="submitBtn">등록하고 타이머 시작</button>
-    </form>
-
     <div class="status-line" id="statusLine">연결 중…</div>
+  </div>
+
+  <div id="formSheet">
+    <button type="button" class="sheet-handle" id="sheetToggle">차량 등록 <span class="chevron" id="sheetChevron">▲</span></button>
+    <div class="sheet-body" id="sheetBody">
+      <div class="sheet-body-inner">
+        <form id="addForm">
+          <div class="field-row">
+            <div>
+              <label>차량 번호</label>
+              <input type="text" id="plateInput" placeholder="12가 3456" />
+            </div>
+            <div>
+              <label>연락처 (선택)</label>
+              <input type="text" id="phoneInput" placeholder="010-0000-0000" />
+            </div>
+          </div>
+          <label>등록 매장</label>
+          <div class="store-row" id="storeRow">
+            <button type="button" class="store-btn" data-store="cafe">카페</button>
+            <button type="button" class="store-btn" data-store="donkatsu">돈까스</button>
+          </div>
+          <div class="error" id="errorMsg" style="display:none;"></div>
+          <button type="submit" class="submit-btn" id="submitBtn">등록하고 타이머 시작</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <div class="modal-bg" id="modalBg">
@@ -181,7 +207,7 @@ const DURATION_MS = 3 * 60 * 60 * 1000;
 const TOTAL_SPOTS = 7;
 const STORE_META = {
   cafe: { label: "카페", color: "#2F6F62", bg: "#EAF2EF" },
-  donkatsu: { label: "돈까스집", color: "#9C6B2E", bg: "#F5EEE1" },
+  donkatsu: { label: "돈까스", color: "#9C6B2E", bg: "#F5EEE1" },
 };
 
 let cars = [];
@@ -210,6 +236,14 @@ function formatRemaining(ms) {
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+function formatCheckin(ts) {
+  const d = new Date(ts);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h < 12 ? "오전" : "오후";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${ampm} ${h12}:${pad(m)} 입차`;
 }
 function escapeHtml(str) {
   const d = document.createElement("div");
@@ -272,6 +306,7 @@ function render() {
           <span class="badge" style="background:${meta.color}">${meta.label}</span>
         </div>
         ${car.phone ? `<div class="phone">${escapeHtml(car.phone)}</div>` : ""}
+        <div class="checkin">${formatCheckin(car.startedAt)}</div>
         <div class="bottomrow">
           <div class="timer ${overtime ? "over" : ""}">${overtime ? "+" + formatRemaining(remaining) + " 초과" : formatRemaining(remaining)}</div>
           <button class="out-btn" data-id="${car.id}">출차</button>
@@ -290,6 +325,12 @@ function render() {
   submitBtn.textContent = occupied >= TOTAL_SPOTS ? "주차장이 가득 찼습니다" : "등록하고 타이머 시작";
   statusLine.style.display = connected ? "none" : "block";
 }
+
+const formSheet = document.getElementById("formSheet");
+const sheetToggle = document.getElementById("sheetToggle");
+sheetToggle.onclick = () => {
+  formSheet.classList.toggle("open");
+};
 
 document.querySelectorAll(".store-btn").forEach((btn) => {
   updateStoreBtn(btn);
@@ -323,6 +364,7 @@ document.getElementById("addForm").addEventListener("submit", (e) => {
   const newCar = { id, plate, phone, store: selectedStore, startedAt: Date.now() };
   carsRef.child(id).set(newCar).catch((err) => showDebug("저장 실패: " + err.message));
   plateInput.value = ""; phoneInput.value = "";
+  formSheet.classList.remove("open");
 });
 
 function openModal(id) {
