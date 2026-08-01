@@ -6,13 +6,14 @@
 <title>주차 등록 — redbear garden</title>
 <style>
   :root {
-    --bg: #F6F5EF;
-    --ink: #223125;
-    --muted: #6b6b63;
-    --faint: #8A8A82;
-    --border: #D9D6CA;
-    --accent: #3F7052;
-    --danger: #C1443A;
+    --bg: #F5EFEC;
+    --ink: #2A1E1C;
+    --muted: #6b5f5c;
+    --faint: #948884;
+    --border: #DCD1CD;
+    --accent: #8B2E28;
+    --leaf: #3F7052;
+    --danger: #D9483A;
     --success-bg: #E8F0EA;
   }
   * { box-sizing: border-box; }
@@ -29,7 +30,12 @@
   input[type=text] { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 16px; outline: none; }
   input[type=text]:focus { box-shadow: 0 0 0 2px var(--accent); }
   .error { color: var(--danger); font-size: 14px; margin-bottom: 14px; }
-  .submit-btn { width: 100%; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 16px; color: #fff; background: var(--ink); border: none; cursor: pointer; }
+  .submit-btn {
+    width: 100%; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 16px;
+    color: #fff; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #B0453A 0%, #7A241D 55%, #9C2E27 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 10px rgba(139,46,40,0.35);
+  }
   .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .status-line { text-align: center; font-size: 13px; color: var(--faint); margin-top: 16px; }
   .success { display: none; background: var(--success-bg); border: 1px solid #C9E0D8; border-radius: 18px; padding: 32px 24px; text-align: center; }
@@ -37,7 +43,7 @@
   .success .icon { font-size: 40px; margin-bottom: 12px; }
   .success h2 { font-size: 19px; margin: 0 0 8px; }
   .success p { font-size: 14px; color: var(--muted); margin: 0 0 6px; line-height: 1.5; }
-  .success .again-btn { margin-top: 18px; background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+  .success .again-btn { margin-top: 18px; background: none; border: none; color: var(--leaf); font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer; }
   .debug-banner { display: none; background: #FBEAE8; border: 1px solid #E8B4AE; color: var(--danger); font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; }
   .debug-banner.show { display: block; }
 </style>
