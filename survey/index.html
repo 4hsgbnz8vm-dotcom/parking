@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>듣기 조사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body { font-family:"Noto Sans KR",system-ui,sans-serif; color:#111; background:#fff; word-break:keep-all;
+         max-width:520px; margin:0 auto; padding:28px 22px 40px; display:flex; flex-direction:column; }
+  .view { display:none; flex:1; flex-direction:column; }
+  .view.on { display:flex; }
+  h1 { font-size:26px; font-weight:700; line-height:1.35; }
+  p { font-size:16px; line-height:1.75; color:#333; margin-top:14px; }
+  .small { font-size:13px; color:#999; margin-top:10px; }
+  input, textarea { width:100%; font:inherit; font-size:16px; border:1px solid #d6d6d6; border-radius:12px; padding:13px 14px; margin-top:8px; }
+  textarea { min-height:110px; resize:vertical; }
+  label { font-size:14px; color:#888; margin-top:22px; display:block; }
+  .btn { font:inherit; font-size:18px; font-weight:700; width:100%; padding:17px; border-radius:14px; border:none; background:#111; color:#fff; margin-top:22px; }
+  .btn.sub { background:#fff; color:#111; border:1.5px solid #111; font-size:16px; padding:14px; margin-top:12px; }
+  .btn:disabled { background:#ccc; }
+  .num { font-size:128px; font-weight:700; text-align:center; line-height:1; margin-top:8vh; }
+  .of { text-align:center; color:#999; font-size:18px; margin-top:8px; }
+  .dots { display:flex; justify-content:center; gap:7px; margin-top:22px; }
+  .dots i { width:9px; height:9px; border-radius:50%; background:#ddd; }
+  .dots i.on { background:#111; }
+  .hint { text-align:center; color:#888; font-size:15px; margin-top:28px; }
+  .grow { flex:1; }
+  .big { font-size:20px; padding:24px; }
+  .code { background:#f4f4f4; border-radius:12px; padding:14px; font-size:15px; line-height:1.6; margin-top:16px; white-space:pre-wrap; }
+  .ok { color:#2b7a3d; font-size:14px; margin-top:10px; min-height:20px; text-align:center; }
+</style>
+</head>
+<body>
+
+<section class="view on" id="v1">
+  <h1>목소리가 들리면<br>바로 눌러 주세요</h1>
+  <p>사람 목소리를 AI에 여러 번 통과시킨 소리가 1번부터 9번까지 차례로 나와요. 처음엔 거의 알아듣기 어려워요.</p>
+  <p>무슨 말을 하는지 알 것 같은 순간에 <b>들려요</b> 버튼을 눌러 주세요. 다시 듣기는 없고, 2분쯤 걸려요.</p>
+  <p class="small">이어폰을 끼고 조용한 곳에서 들어 주세요.</p>
+  <label for="nm">이름 (선택)</label>
+  <input id="nm" placeholder="이름이나 이니셜" autocomplete="off">
+  <div class="grow"></div>
+  <button class="btn" id="start" type="button">시작</button>
+</section>
+
+<section class="view" id="v2">
+  <div class="num" id="num">1</div>
+  <div class="of" id="of">/ 9</div>
+  <div class="dots" id="dots"></div>
+  <div class="hint" id="hint">소리를 듣는 중</div>
+  <div class="grow"></div>
+  <button class="btn big" id="heard" type="button">들려요</button>
+</section>
+
+<section class="view" id="v3">
+  <h1 id="q3">뭐라고 들렸나요?</h1>
+  <p id="p3">들린 대로 적어 주세요. 일부만 들려도 괜찮아요.</p>
+  <textarea id="tx" placeholder="들린 문장"></textarea>
+  <div class="grow"></div>
+  <button class="btn" id="done" type="button">완료</button>
+</section>
+
+<section class="view" id="v4">
+  <h1 id="h4">저장하는 중…</h1>
+  <p id="p4"></p>
+  <button class="btn sub" id="retry" type="button" style="display:none;">다시 보내기</button>
+</section>
+
+<audio id="au" src="survey.mp3" preload="auto"></audio>
+
+<script>
+const N = 9, STEP_SEC = 1.0 + 11.25 + 1.5;
+const au = document.getElementById("au");
+const $ = id => document.getElementById(id);
+let picked = null;
+function show(id) { document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id)); window.scrollTo(0, 0); }
+$("dots").innerHTML = Array.from({ length: N }, () => "<i></i>").join("");
+function stepNow() { return Math.min(N, Math.floor(au.currentTime / STEP_SEC) + 1); }
+function tick() {
+  const k = stepNow();
+  $("num").textContent = k;
+  document.querySelectorAll("#dots i").forEach((d, i) => d.classList.toggle("on", i < k));
+}
+au.addEventListener("timeupdate", tick);
+au.addEventListener("ended", () => {
+  picked = -1;
+  $("q3").textContent = "끝까지 무슨 말인지 몰랐나요?";
+  $("p3").textContent = "조금이라도 들린 말이 있으면 적어 주세요. 없으면 비워 두고 완료를 눌러 주세요.";
+  show("v3");
+});
+$("start").addEventListener("click", async () => {
+  show("v2");
+  try { au.currentTime = 0; await au.play(); }
+  catch (e) { $("hint").textContent = "소리가 안 나오면 화면을 한 번 눌러 주세요"; document.body.addEventListener("click", () => au.play().catch(() => {}), { once: true }); }
+});
+$("heard").addEventListener("click", () => {
+  if (au.paused && au.currentTime === 0) return;
+  picked = stepNow();
+  au.pause();
+  show("v3");
+  $("tx").focus();
+});
+let pending = null;
+async function send() {
+  $("h4").textContent = "저장하는 중…"; $("p4").textContent = ""; $("retry").style.display = "none";
+  try {
+    await window.saveAnswer(pending);
+    $("h4").textContent = "감사합니다";
+    $("p4").textContent = "답이 저장됐어요. 창을 닫으셔도 돼요.";
+  } catch (e) {
+    $("h4").textContent = "저장이 안 됐어요";
+    $("p4").textContent = "인터넷 연결을 확인하고 다시 보내기를 눌러 주세요.";
+    $("retry").style.display = "block";
+  }
+}
+$("retry").addEventListener("click", send);
+$("done").addEventListener("click", () => {
+  pending = {
+    step: picked,
+    name: $("nm").value.trim().slice(0, 30),
+    text: $("tx").value.trim().replace(/\s+/g, " ").slice(0, 300)
+  };
+  show("v4");
+  send();
+});
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAvyANB0e_bd78hv7viato-bkhRnTMAqmc",
+  authDomain: "parking-3b761.firebaseapp.com",
+  databaseURL: "https://parking-3b761-default-rtdb.firebaseio.com/",
+  projectId: "parking-3b761",
+  appId: "1:737089930127:web:402f1ae8dfbfb495a741fa"
+};
+let ref = null;
+try { firebase.initializeApp(firebaseConfig); ref = firebase.database().ref("listening_survey/responses"); } catch (e) {}
+window.saveAnswer = a => {
+  if (!ref) return Promise.reject(new Error("no db"));
+  return Promise.race([
+    ref.push({ step: a.step, name: a.name, text: a.text, at: firebase.database.ServerValue.TIMESTAMP }),
+    new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 10000))
+  ]);
+};
+</script>
+</body>
+</html>
