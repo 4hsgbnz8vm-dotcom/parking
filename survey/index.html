@@ -35,6 +35,10 @@
   .replay button { font:inherit; font-size:16px; font-weight:700; padding:12px 18px; border-radius:12px; border:1.5px solid #111; background:#fff; color:#111; white-space:nowrap; }
   .replay button.playing { background:#111; color:#fff; }
   .replay span { font-size:14px; color:#888; }
+  .howto { margin-top:20px; border-top:1px solid #e6e6e6; padding-top:16px; }
+  .ht { font-size:14px; font-weight:700; color:#111; }
+  .howto ol { margin:8px 0 0 20px; }
+  .howto li { font-size:15px; line-height:1.65; color:#333; margin-top:8px; padding-left:2px; }
   .ok { color:#2b7a3d; font-size:14px; margin-top:10px; min-height:20px; text-align:center; }
 </style>
 </head>
@@ -42,9 +46,18 @@
 
 <section class="view on" id="v1">
   <h1>듣기 테스트</h1>
-  <p>AI를 여러 번 통과한 목소리가 1번부터 9번까지 차례로 재생됨</p>
-  <p>목소리를 이해할 수 있게 된 순간 아래 버튼을 누르시오</p>
-  <p class="small">재생 중에는 다시 듣기 없음<br>소요 시간 약 2분<br>이어폰 착용 권장</p>
+  <p>한 문장을 읽은 목소리를 AI에 여러 번 통과시켜 뭉개 놓은 소리. 1번부터 9번까지 차례로 재생되고, 뒤 번호로 갈수록 점점 또렷해짐.</p>
+  <div class="howto">
+    <div class="ht">진행 방법</div>
+    <ol>
+      <li>이어폰을 끼고 맨 아래 <b>시작</b> 버튼을 누르시오.</li>
+      <li>소리가 1번부터 자동으로 이어서 나옴. 번호 하나에 약 14초.</li>
+      <li>무슨 문장인지 이해되는 순간, 화면 아래 <b>목소리를 이해할 수 있으면 누르시오</b> 버튼을 누르시오. 버튼은 한 번만 누를 수 있음.</li>
+      <li>버튼을 누르면 재생이 멈추고 적는 화면으로 넘어감. 들린 문장을 적고 <b>제출</b>을 누르시오. 고른 번호는 그 화면에서 다시 들을 수 있음.</li>
+      <li>9번까지 다 들어도 이해가 안 되면 누르지 않아도 됨. 끝나면 들린 말만 적고 제출하시오.</li>
+    </ol>
+  </div>
+  <p class="small">재생 중에는 되돌리기와 다시 듣기 없음<br>소요 시간 약 2분</p>
   <label for="nm">이름 (선택, 이니셜 가능)</label>
   <input id="nm" placeholder="이름 또는 이니셜" autocomplete="off">
   <div class="grow"></div>
