@@ -114,7 +114,7 @@ ref.on("value", snap => {
   const v = snap.val() || {};
   rows = Object.entries(v).map(([id, d]) => ({ id, ...d })).filter(r => typeof r.step === "number");
   render();
-  $("where").textContent = "참가자가 완료를 누르면 여기에 바로 들어와요.";
+  $("where").textContent = "참가자가 제출을 누르면 여기에 바로 들어와요.";
 }, () => { clearTimeout(loadT); $("where").textContent = "결과를 불러오지 못했어요."; });
 
 $("list").addEventListener("click", async e => {
